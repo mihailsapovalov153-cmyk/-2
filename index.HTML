@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>УГА БУГА: Михаил Сосоев и Малая Такмачька</title>
+<style>
+  body {
+    margin: 0;
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    overflow: hidden;
+  }
+  #game {
+    position: relative;
+    width: 900px;
+    height: 600px;
+    background: linear-gradient(#87ceeb, #e0f6ff 70%, #90ee90 70%);
+    border: 8px solid #333;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.7);
+  }
+  #cheb {
+    position: absolute;
+    bottom: 60px;
+    width: 110px;
+    height: 110px;
+    z-index: 5;
+  }
+  #cheb svg { width: 100%; height: 100%; }
+  #nickname {
+    position: absolute;
+    transform: translateX(-50%);
+    background: #fff;
+    border: 3px solid #333;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #d32f2f;
+    white-space: nowrap;
+    z-index: 6;
+    pointer-events: none;
+  }
+  .banana {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    font-size: 34px;
+    line-height: 40px;
+    text-align: center;
+    z-index: 3;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+  }
+  #hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 22px;
+    font-weight: bold;
+    color: #222;
+    text-shadow: 1px 1px 0 #fff;
+    z-index: 10;
+  }
+  #bubble {
+    position: absolute;
+    padding: 8px 18px;
+    background: #fff;
+    border: 3px solid #333;
+    border-radius: 20px;
+    font-size: 26px;
+    font-weight: bold;
+    color: #d32f2f;
+    white-space: nowrap;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.5);
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  #bubble.show { opacity: 1; transform: scale(1); }
+
+  #gorny {
+    position: absolute;
+    right: 15px;
+    bottom: 15px;
+    width: 300px;
+    height: 340px;
+    z-index: 4;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+  }
+  #gorny .photoWrap {
+    width: 300px;
+    height: 300px;
+    border: 6px solid #8b4513;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    background: #c9b48a;
+  }
+  #gorny .photoWrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  #gorny .label {
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 2px 8px;
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 16px;
+  }
+
+  #flyToGorny {
+    position: absolute;
+    font-size: 30px;
+    z-index: 25;
+    pointer-events: none;
+  }
+
+  #endScreen {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.78);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    text-align: center;
+    padding: 20px;
+  }
+  #endScreen h1 {
+    font-size: 56px;
+    margin: 0 0 10px;
+    color: #ffd700;
+    text-shadow: 3px 3px 0 #d32f2f;
+  }
+  #endScreen p { font-size: 22px; margin: 6px; }
+  #endScreen .session {
+    font-size: 32px;
+    color: #7CFC00;
+    margin: 18px 0;
+    text-shadow: 2px 2px 0 #000;
+  }
+  button.btn {
+    margin-top: 20px;
+    font-size: 26px;
+    padding: 12px 36px;
+    font-family: inherit;
+    font-weight: bold;
+    background: #ffd700;
+    border: 4px solid #333;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  button.btn:hover { transform: scale(1.08); }
+  .hidden { display: none !important; }
+  #progressWrap {
+    position: absolute;
+    top: 46px;
+    left: 10px;
+    width: 260px;
+    z-index: 10;
+  }
+  #progressBar {
+    height: 14px;
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #progressFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffd700, #ff9800);
+    transition: width 0.25s;
+  }
+  #progressText {
+    font-size: 13px;
+    font-weight: bold;
+    color: #222;
+    text-shadow: 1px 1px 0 #fff;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+<div id="game">
+
+  <div id="hud">
+    <div>Собрано: <span id="score">0</span></div>
+    <div>Сдано в Горный: <span id="delivered">0</span> / 20</div>
+  </div>
+
+  <div id="progressWrap">
+    <div id="progressBar"><div id="progressFill"></div></div>
+    <div id="progressText">До сдачи сессии: 20 бананов</div>
+  </div>
+
+  <div id="cheb">
+    <svg viewBox="0 0 100 100">
+      <defs>
+        <clipPath id="headClip">
+          <circle cx="50" cy="42" r="30"/>
+        </clipPath>
+      </defs>
+      <ellipse cx="50" cy="70" rx="34" ry="30" fill="#5a3a1a"/>
+      <circle cx="18" cy="30" r="16" fill="#6b4423"/>
+      <circle cx="82" cy="30" r="16" fill="#6b4423"/>
+      <circle cx="18" cy="30" r="9" fill="#8b5a2b"/>
+      <circle cx="82" cy="30" r="9" fill="#8b5a2b"/>
+      <image id="faceImg" x="20" y="12" width="60" height="60"
+             preserveAspectRatio="xMidYMid slice"
+             clip-path="url(#headClip)"
+             href="image 728.png"/>
+      <circle cx="50" cy="42" r="30" fill="none" stroke="#5a3a1a" stroke-width="3"/>
+      <ellipse cx="14" cy="72" rx="9" ry="7" fill="#5a3a1a"/>
+      <ellipse cx="86" cy="72" rx="9" ry="7" fill="#5a3a1a"/>
+      <ellipse cx="36" cy="96" rx="10" ry="6" fill="#4a2f15"/>
+      <ellipse cx="64" cy="96" rx="10" ry="6" fill="#4a2f15"/>
+    </svg>
+  </div>
+
+  <div id="nickname">Михаил Сосоев</div>
+  <div id="bubble">УГА БУГА!</div>
+
+  <div id="gorny">
+    <div class="photoWrap">
+      <img src="image 729.png" alt="Малая Такмачька">
+    </div>
+    <div class="label">Горный техникум</div>
+  </div>
+
+  <div id="endScreen" class="hidden">
+    <h1>УГА БУГА!</h1>
+    <div class="session">Вы закрыли сессию!</div>
+    <p>А теперь в штурм за Малую Такмачьку!</p>
+    <p>Зачётка закрыта. Вперёд, Михаил!</p>
+    <button class="btn" onclick="restartGame()">Играть снова</button>
+  </div>
+
+</div>
+
+<script>
+const game = document.getElementById('game');
+const cheb = document.getElementById('cheb');
+const nickname = document.getElementById('nickname');
+const scoreEl = document.getElementById('score');
+const deliveredEl = document.getElementById('delivered');
+const bubble = document.getElementById('bubble');
+const endScreen = document.getElementById('endScreen');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+
+// ============ МУЗЫКА ============
+const bgMusic = new Audio('bebrich43_2026-10-14-02-26-26_1791933986585.mp4');
+bgMusic.loop = true;
+bgMusic.volume = 0.5;
+
+bgMusic.play().catch(() => {
+  const enableAudio = () => {
+    bgMusic.play().catch(() => {});
+    document.removeEventListener('click', enableAudio);
+    document.removeEventListener('keydown', enableAudio);
+  };
+  document.addEventListener('click', enableAudio);
+  document.addEventListener('keydown', enableAudio);
+});
+
+// ============ ИГРА ============
+const W = 900, H = 600;
+const CHEB_W = 110, CHEB_H = 110;
+const GROUND = 60;
+const TARGET = 20;
+
+const BANANA_TOP_MIN = 300;
+const BANANA_TOP_MAX = 470;
+const BANANA_SIZE = 40;
+
+const GORNY_ZONE = {
+  x1: W - 15 - 300,
+  y1: H - 15 - 340,
+  x2: W - 15,
+  y2: H - 15
+};
+
+let chebX = W/2 - CHEB_W/2;
+let chebY = GROUND;
+let vx = 0, vy = 0;
+let onGround = true;
+let bananas = [];
+let score = 0;
+let delivered = 0;
+let running = false;
+let spawnTimer = 0;
+let lastTime = 0;
+let bubbleTimer = 0;
+let won = false;
+
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'Space' || e.code === 'ArrowUp') e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+function startGame() {
+  endScreen.classList.add('hidden');
+  running = true;
+  won = false;
+  chebX = W/2 - CHEB_W/2;
+  chebY = GROUND;
+  vy = 0;
+  score = 0; delivered = 0;
+  bananas.forEach(b => b.el.remove());
+  bananas = [];
+  scoreEl.textContent = 0;
+  deliveredEl.textContent = 0;
+  updateProgress();
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
+
+function restartGame() { startGame(); }
+
+function updateProgress() {
+  const p = Math.min(100, delivered / TARGET * 100);
+  progressFill.style.width = p + '%';
+  const left = Math.max(0, TARGET - delivered);
+  progressText.textContent = left > 0
+    ? `До сдачи сессии: ${left} банан(ов)`
+    : 'Сессия сдана!';
+}
+
+function sayUga() {
+  bubble.textContent = Math.random() < 0.7 ? 'УГА БУГА!' : 'УГА-БУГА-БАНАНА!';
+  const bx = chebX + CHEB_W/2;
+  const by = H - chebY - CHEB_H - 20;
+  bubble.style.left = Math.max(10, Math.min(W - 240, bx - 90)) + 'px';
+  bubble.style.top = Math.max(10, by) + 'px';
+  bubble.classList.add('show');
+  bubbleTimer = 700;
+}
+
+function isInGornyZone(x, y) {
+  return !(x + BANANA_SIZE < GORNY_ZONE.x1 ||
+           x > GORNY_ZONE.x2 ||
+           y + BANANA_SIZE < GORNY_ZONE.y1 ||
+           y > GORNY_ZONE.y2);
+}
+
+function spawnBanana() {
+  let x, y, tries = 0;
+  do {
+    x = 20 + Math.random() * (W - 80);
+    y = BANANA_TOP_MIN + Math.random() * (BANANA_TOP_MAX - BANANA_TOP_MIN);
+    tries++;
+  } while (isInGornyZone(x, y) && tries < 50);
+
+  if (tries >= 50) return;
+
+  const el = document.createElement('div');
+  el.className = 'banana';
+  el.textContent = '🍌';
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  game.appendChild(el);
+  bananas.push({ el, x, y, w: BANANA_SIZE, h: BANANA_SIZE, taken: false });
+}
+
+function collectBanana(b) {
+  b.taken = true;
+  score++;
+  scoreEl.textContent = score;
+  sayUga();
+
+  const fly = document.createElement('div');
+  fly.id = 'flyToGorny';
+  fly.textContent = '🍌';
+  fly.style.left = b.x + 'px';
+  fly.style.top = b.y + 'px';
+  game.appendChild(fly);
+
+  const targetX = W - 15 - 150;
+  const targetY = H - 15 - 190;
+  const startX = b.x, startY = b.y;
+  const dur = 550;
+  const t0 = performance.now();
+
+  function animateFly(t) {
+    const p = Math.min(1, (t - t0) / dur);
+    const ease = p * p;
+    fly.style.left = (startX + (targetX - startX) * ease) + 'px';
+    fly.style.top = (startY + (targetY - startY) * ease) + 'px';
+    fly.style.transform = `scale(${1 - 0.5*p}) rotate(${p*720}deg)`;
+    if (p < 1) {
+      requestAnimationFrame(animateFly);
+    } else {
+      fly.remove();
+      if (won) return;
+      delivered++;
+      deliveredEl.textContent = delivered;
+      updateProgress();
+      if (delivered >= TARGET) winGame();
+    }
+  }
+  requestAnimationFrame(animateFly);
+
+  b.el.remove();
+}
+
+function winGame() {
+  won = true;
+  running = false;
+  setTimeout(() => { endScreen.classList.remove('hidden'); }, 500);
+}
+
+function update(dt) {
+  if (won) {
+    cheb.style.left = chebX + 'px';
+    cheb.style.bottom = chebY + 'px';
+    nickname.style.left = (chebX + CHEB_W/2) + 'px';
+    nickname.style.bottom = (chebY + CHEB_H + 6) + 'px';
+    return;
+  }
+
+  const speed = 420;
+  if (keys['ArrowLeft'] || keys['KeyA']) vx = -speed;
+  else if (keys['ArrowRight'] || keys['KeyD']) vx = speed;
+  else vx = 0;
+
+  if ((keys['ArrowUp'] || keys['Space'] || keys['KeyW']) && onGround) {
+    vy = 720;
+    onGround = false;
+  }
+
+  const GRAV = 2200;
+  if (!onGround) {
+    vy -= GRAV * dt / 1000;
+    chebY += vy * dt / 1000;
+    if (chebY <= GROUND) {
+      chebY = GROUND;
+      vy = 0;
+      onGround = true;
+    }
+  }
+
+  chebX += vx * dt / 1000;
+  chebX = Math.max(0, Math.min(W - CHEB_W, chebX));
+
+  cheb.style.left = chebX + 'px';
+  cheb.style.bottom = chebY + 'px';
+
+  nickname.style.left = (chebX + CHEB_W/2) + 'px';
+  nickname.style.bottom = (chebY + CHEB_H + 6) + 'px';
+
+  const cx = chebX + CHEB_W/2;
+  const cy = H - chebY - CHEB_H/2;
+  for (const b of bananas) {
+    if (b.taken) continue;
+    const bx = b.x + b.w/2;
+    const by = b.y + b.h/2;
+    const dx = cx - bx, dy = cy - by;
+    if (Math.sqrt(dx*dx + dy*dy) < 75) collectBanana(b);
+  }
+  bananas = bananas.filter(b => !b.taken);
+
+  spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    // УВЕЛИЧЕН СПАВН В 1.5 РАЗА + поднят лимит до 12
+    if (bananas.length < 12) spawnBanana();
+    spawnTimer = 533 + Math.random() * 400; 
+  }
+
+  if (bubbleTimer > 0) {
+    bubbleTimer -= dt;
+    if (bubbleTimer <= 0) bubble.classList.remove('show');
+  }
+}
+
+function loop(t) {
+  if (!running && !won) return;
+  const dt = Math.min(50, t - lastTime);
+  lastTime = t;
+  update(dt);
+  if (!won) requestAnimationFrame(loop);
+}
+
+// Автозапуск игры сразу
+startGame();
+
+// Позиция ника до старта
+nickname.style.left = (chebX + CHEB_W/2) + 'px';
+nickname.style.bottom = (chebY + CHEB_H + 6) + 'px';
+</script>
+</body>
+</html>
